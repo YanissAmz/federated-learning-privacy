@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+
+# ML artifacts
+*.pt
+*.bin
+*.safetensors
+checkpoints/
+wandb/
+mlruns/
+
+# Data
+data/
+
+# IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store
+*.swp
+
+# Environment
+.env
+.env.*
+
+# Cache
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Claude
+CLAUDE.md
+.claude/
