@@ -1,0 +1,171 @@
+{
+  "fl_runs": [
+    {
+      "tag": "no_def",
+      "epsilon": null,
+      "noise_multiplier": null,
+      "init_accuracy": 0.0873,
+      "final_accuracy": 0.6983,
+      "rounds": 20
+    },
+    {
+      "tag": "dp_eps64",
+      "epsilon": 64.0,
+      "noise_multiplier": 0.5970225841879285,
+      "init_accuracy": 0.0873,
+      "final_accuracy": 0.1,
+      "rounds": 20
+    },
+    {
+      "tag": "dp_eps16",
+      "epsilon": 16.0,
+      "noise_multiplier": 1.707303174982458,
+      "init_accuracy": 0.0873,
+      "final_accuracy": 0.1043,
+      "rounds": 20
+    },
+    {
+      "tag": "dp_eps4",
+      "epsilon": 4.0,
+      "noise_multiplier": 5.796229909835693,
+      "init_accuracy": 0.0873,
+      "final_accuracy": 0.104,
+      "rounds": 20
+    },
+    {
+      "tag": "dp_eps1",
+      "epsilon": 1.0,
+      "noise_multiplier": 21.915948969082148,
+      "init_accuracy": 0.0873,
+      "final_accuracy": 0.1022,
+      "rounds": 20
+    }
+  ],
+  "attacks": [
+    {
+      "tag_pattern": "attack_no_def",
+      "samples": [
+        {
+          "sample": 7,
+          "psnr_db": 14.49043562481793,
+          "ssim": 0.4631572365760803,
+          "label_correct": true
+        },
+        {
+          "sample": 42,
+          "psnr_db": 21.65683958896834,
+          "ssim": 0.6501869559288025,
+          "label_correct": true
+        },
+        {
+          "sample": 100,
+          "psnr_db": 18.808739350470255,
+          "ssim": 0.6781898736953735,
+          "label_correct": true
+        }
+      ],
+      "avg_psnr_db": 18.31867152141884,
+      "avg_ssim": 0.5971780220667521
+    },
+    {
+      "tag_pattern": "attack_dp_eps64",
+      "samples": [
+        {
+          "sample": 7,
+          "psnr_db": 11.179867243287148,
+          "ssim": 0.05474664270877838,
+          "label_correct": true
+        },
+        {
+          "sample": 42,
+          "psnr_db": 15.360509600346386,
+          "ssim": 0.09723129868507385,
+          "label_correct": false
+        },
+        {
+          "sample": 100,
+          "psnr_db": 12.615805422783115,
+          "ssim": -0.019620519131422043,
+          "label_correct": false
+        }
+      ],
+      "avg_psnr_db": 13.052060755472217,
+      "avg_ssim": 0.044119140754143395
+    },
+    {
+      "tag_pattern": "attack_dp_eps16",
+      "samples": [
+        {
+          "sample": 7,
+          "psnr_db": 11.008845413169052,
+          "ssim": 0.0712338238954544,
+          "label_correct": true
+        },
+        {
+          "sample": 42,
+          "psnr_db": 15.04705536646646,
+          "ssim": 0.1094609722495079,
+          "label_correct": false
+        },
+        {
+          "sample": 100,
+          "psnr_db": 12.734192985978636,
+          "ssim": -0.02751019038259983,
+          "label_correct": false
+        }
+      ],
+      "avg_psnr_db": 12.930031255204716,
+      "avg_ssim": 0.05106153525412083
+    },
+    {
+      "tag_pattern": "attack_dp_eps4",
+      "samples": [
+        {
+          "sample": 7,
+          "psnr_db": 10.845784632009172,
+          "ssim": 0.07350050657987595,
+          "label_correct": true
+        },
+        {
+          "sample": 42,
+          "psnr_db": 14.70632989743926,
+          "ssim": 0.07508573681116104,
+          "label_correct": false
+        },
+        {
+          "sample": 100,
+          "psnr_db": 12.904629303125786,
+          "ssim": -0.003975781612098217,
+          "label_correct": false
+        }
+      ],
+      "avg_psnr_db": 12.818914610858073,
+      "avg_ssim": 0.04820348725964626
+    },
+    {
+      "tag_pattern": "attack_dp_eps1",
+      "samples": [
+        {
+          "sample": 7,
+          "psnr_db": 10.524146226374853,
+          "ssim": 0.02075323462486267,
+          "label_correct": true
+        },
+        {
+          "sample": 42,
+          "psnr_db": 14.666921038217884,
+          "ssim": 0.12178368866443634,
+          "label_correct": false
+        },
+        {
+          "sample": 100,
+          "psnr_db": 12.997059361725992,
+          "ssim": -0.010249211452901363,
+          "label_correct": false
+        }
+      ],
+      "avg_psnr_db": 12.729375542106242,
+      "avg_ssim": 0.044095903945465885
+    }
+  ]
+}

@@ -26,6 +26,8 @@ dependencies = [
     "matplotlib>=3.8",
     "gradio>=4.20",
     "pyyaml>=6.0",
+    "imageio>=2.34",
+    "pillow>=10.0",
 ]
 
 [project.optional-dependencies]
@@ -49,7 +51,9 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
-ignore = ["E501"]
+# RUF001/2/3: math notation in code/strings/comments uses Unicode chars
+# (ε, σ, δ, ≥, ≈, ×, …). They are a feature of the docstrings, not a typo.
+ignore = ["E501", "RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]
