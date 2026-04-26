@@ -274,10 +274,10 @@ compose with v0.2's DP — see `FLServer.aggregate(aggregator=..., dp=...)`.
 
 | | mean | median | trimmed_mean | Krum |
 |---|---|---|---|---|
-| **`sign_flip`**, K=2     | _see results/byzantine_summary.json_ | — | — | — |
-| **`constant`**, K=2      | — | — | — | — |
-| **`suppression`**, K=2   | — | — | — | — |
-| **`stealth`**, K=2       | — | — | — | — |
+| **`constant`**, K=2 | 50.6% / cos=+0.86 | 10.0% / cos=+nan | 46.5% / cos=+0.88 | 10.0% / cos=+nan |
+| **`sign_flip`**, K=2 | 50.2% / cos=+0.87 | 37.7% / cos=+0.92 | 50.7% / cos=+0.91 | 41.9% / cos=+0.94 |
+| **`stealth`**, K=2 | 50.7% / cos=+0.85 | 48.5% / cos=+0.96 | 51.4% / cos=+0.92 | 49.9% / cos=+0.95 |
+| **`suppression`**, K=2 | 50.6% / cos=+0.86 | 49.2% / cos=+0.96 | 52.8% / cos=+0.93 | 53.2% / cos=+0.94 |
 
 The hypothesis the matrix tests:
 

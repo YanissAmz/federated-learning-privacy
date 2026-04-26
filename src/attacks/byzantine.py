@@ -235,9 +235,11 @@ class StealthSuppression(ByzantineAttack):
         honest_state: dict[str, torch.Tensor] | None = None,
     ) -> dict[str, torch.Tensor]:
         # Build a deterministic shared unit-direction across malicious group.
-        gen = torch.Generator(device="cpu").manual_seed(self.seed)
+        # Generate on CPU then move to the param's device — torch.Generator can
+        # only be CPU- or CUDA-bound at construction, and we want one source.
+        cpu_gen = torch.Generator(device="cpu").manual_seed(self.seed)
         direction = {
-            k: torch.randn(v.shape, generator=gen, device=v.device, dtype=torch.float32)
+            k: torch.randn(v.shape, generator=cpu_gen, dtype=torch.float32).to(v.device)
             for k, v in global_state.items()
         }
         # Normalize globally to L2 = target_norm
