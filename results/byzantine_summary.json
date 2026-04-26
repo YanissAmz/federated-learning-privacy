@@ -1,0 +1,68 @@
+{
+  "cells": [
+    {
+      "tag": "byzantine_sign_flip_mean_K2",
+      "attack": "sign_flip",
+      "aggregator": "mean",
+      "final_accuracy": 0.3201,
+      "avg_cosine_target_to_global": 0.9200196862220764
+    },
+    {
+      "tag": "byzantine_sign_flip_median_K2",
+      "attack": "sign_flip",
+      "aggregator": "median",
+      "final_accuracy": 0.4465,
+      "avg_cosine_target_to_global": 0.9538159966468811
+    },
+    {
+      "tag": "byzantine_suppression_mean_K2",
+      "attack": "suppression",
+      "aggregator": "mean",
+      "final_accuracy": 0.4252,
+      "avg_cosine_target_to_global": 0.9779468973477682
+    },
+    {
+      "tag": "byzantine_suppression_median_K2",
+      "attack": "suppression",
+      "aggregator": "median",
+      "final_accuracy": 0.4599,
+      "avg_cosine_target_to_global": 0.966677208741506
+    }
+  ],
+  "matrix": {
+    "sign_flip": {
+      "mean": {
+        "final_accuracy": 0.3201,
+        "avg_cosine_target_to_global": 0.9200196862220764
+      },
+      "median": {
+        "final_accuracy": 0.4465,
+        "avg_cosine_target_to_global": 0.9538159966468811
+      }
+    },
+    "suppression": {
+      "mean": {
+        "final_accuracy": 0.4252,
+        "avg_cosine_target_to_global": 0.9779468973477682
+      },
+      "median": {
+        "final_accuracy": 0.4599,
+        "avg_cosine_target_to_global": 0.966677208741506
+      }
+    }
+  },
+  "args": {
+    "config": "/home/yaniss/Dev/federated-learning-privacy/configs/default.yaml",
+    "rounds": 5,
+    "clients": 5,
+    "n_malicious": 2,
+    "target_index": 0,
+    "seed": 42,
+    "device": "cuda",
+    "quick": true,
+    "attacks": null,
+    "aggregators": null,
+    "model": null
+  },
+  "model": "cnn"
+}

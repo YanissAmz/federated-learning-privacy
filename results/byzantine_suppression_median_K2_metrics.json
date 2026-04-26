@@ -1,0 +1,38 @@
+{
+  "attack": "suppression",
+  "aggregator": "median",
+  "n_clients": 5,
+  "n_malicious": 2,
+  "target_idx": 0,
+  "rounds": 3,
+  "model": "cnn",
+  "init_accuracy": 0.0873,
+  "final_accuracy": 0.4599,
+  "history": [
+    {
+      "round": 1,
+      "accuracy": 0.3274,
+      "loss": 1.9023658168792725,
+      "elapsed_s": 12.4
+    },
+    {
+      "round": 2,
+      "accuracy": 0.3639,
+      "loss": 1.764056513595581,
+      "elapsed_s": 24.8
+    },
+    {
+      "round": 3,
+      "accuracy": 0.4599,
+      "loss": 1.499711057662964,
+      "elapsed_s": 37.1
+    }
+  ],
+  "cosine_target_to_global_per_round": [
+    0.9874840378761292,
+    0.9651883244514465,
+    0.9473592638969421
+  ],
+  "avg_cosine_target_to_global": 0.966677208741506,
+  "wall_clock_s": 37.14
+}

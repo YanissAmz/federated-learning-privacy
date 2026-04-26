@@ -1,0 +1,52 @@
+{
+  "attack": "sign_flip",
+  "aggregator": "mean",
+  "n_clients": 5,
+  "n_malicious": 2,
+  "target_idx": 0,
+  "rounds": 5,
+  "model": "cnn",
+  "init_accuracy": 0.0873,
+  "final_accuracy": 0.3768,
+  "history": [
+    {
+      "round": 1,
+      "accuracy": 0.1455,
+      "loss": 2.2795229446411134,
+      "elapsed_s": 15.4
+    },
+    {
+      "round": 2,
+      "accuracy": 0.2443,
+      "loss": 2.222878237915039,
+      "elapsed_s": 28.6
+    },
+    {
+      "round": 3,
+      "accuracy": 0.3051,
+      "loss": 2.1399077980041503,
+      "elapsed_s": 42.1
+    },
+    {
+      "round": 4,
+      "accuracy": 0.3726,
+      "loss": 2.050486682701111,
+      "elapsed_s": 55.8
+    },
+    {
+      "round": 5,
+      "accuracy": 0.3768,
+      "loss": 1.965707755279541,
+      "elapsed_s": 69.1
+    }
+  ],
+  "cosine_target_to_global_per_round": [
+    0.9259939193725586,
+    0.9377762079238892,
+    0.9232183694839478,
+    0.909868061542511,
+    0.9026222825050354
+  ],
+  "avg_cosine_target_to_global": 0.9198957681655884,
+  "wall_clock_s": 69.14
+}

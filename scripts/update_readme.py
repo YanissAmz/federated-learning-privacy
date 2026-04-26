@@ -100,6 +100,35 @@ def patch_table(content: str, header_re: str, new_rows: str) -> tuple[str, bool]
     return content[: m.start(2)] + new_rows + "\n" + content[m.end(2) :], True
 
 
+def build_byzantine_table() -> str | None:
+    """Patch the Byzantine matrix in the README with real numbers from
+    `results/byzantine_summary.json`. Returns the rendered table body lines.
+    """
+    summary_path = RESULTS / "byzantine_summary.json"
+    if not summary_path.exists():
+        return None
+    s = json.loads(summary_path.read_text())
+    matrix = s["matrix"]
+    attacks = list(matrix.keys())
+    if not attacks:
+        return None
+    aggregators = list(matrix[attacks[0]].keys())
+
+    rows = []
+    for attack in attacks:
+        cells = []
+        for agg in aggregators:
+            cell = matrix[attack].get(agg)
+            if cell is None:
+                cells.append("—")
+                continue
+            acc = cell["final_accuracy"]
+            cos = cell["avg_cosine_target_to_global"]
+            cells.append(f"{acc * 100:.1f}% / cos={cos:+.2f}")
+        rows.append(f"| **`{attack}`**, K=2 | " + " | ".join(cells) + " |")
+    return "\n".join(rows)
+
+
 def main() -> None:
     content = README.read_text()
     changed = False
@@ -135,6 +164,22 @@ def main() -> None:
             print("[skip] iDLG attack table — header not found")
     else:
         print("[skip] iDLG attack table — summary.json missing")
+
+    byz_rows = build_byzantine_table()
+    if byz_rows is not None:
+        new, ok = patch_table(
+            content,
+            r"\| \| mean \| median \| trimmed_mean \| Krum \|",
+            byz_rows,
+        )
+        if ok:
+            content = new
+            changed = True
+            print("[ok] Byzantine table patched")
+        else:
+            print("[skip] Byzantine table — header not found")
+    else:
+        print("[skip] Byzantine table — byzantine_summary.json missing")
 
     if changed:
         README.write_text(content)

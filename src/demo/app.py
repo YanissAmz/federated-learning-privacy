@@ -299,6 +299,88 @@ def plot_tradeoff():
     return fig
 
 
+# ----- TAB 5 — Byzantine attacks × robust aggregation matrix ---------------
+
+
+def plot_byzantine_matrix():
+    summary_path = RESULTS / "byzantine_summary.json"
+    if not summary_path.exists():
+        fig, ax = plt.subplots(figsize=(7, 4))
+        ax.text(
+            0.5,
+            0.5,
+            "No byzantine results yet — run:\n  python -m scripts.byzantine",
+            ha="center",
+            va="center",
+            transform=ax.transAxes,
+            fontsize=11,
+        )
+        ax.axis("off")
+        return fig
+
+    s = json.loads(summary_path.read_text())
+    matrix = s["matrix"]
+    attacks = list(matrix.keys())
+    if not attacks:
+        return plt.figure()
+    aggregators = list(matrix[attacks[0]].keys())
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4 + 0.4 * len(attacks)))
+
+    # Left: accuracy heatmap (higher = better, blue)
+    acc_grid = np.array([[matrix[a][g]["final_accuracy"] for g in aggregators] for a in attacks])
+    im1 = ax1.imshow(acc_grid, cmap="Blues", vmin=0, vmax=1, aspect="auto")
+    ax1.set_xticks(range(len(aggregators)))
+    ax1.set_xticklabels(aggregators)
+    ax1.set_yticks(range(len(attacks)))
+    ax1.set_yticklabels(attacks)
+    ax1.set_title("Final test accuracy (higher = better)")
+    for i in range(len(attacks)):
+        for j in range(len(aggregators)):
+            ax1.text(
+                j,
+                i,
+                f"{acc_grid[i, j]:.2f}",
+                ha="center",
+                va="center",
+                color="white" if acc_grid[i, j] > 0.5 else "black",
+                fontsize=10,
+            )
+    fig.colorbar(im1, ax=ax1, fraction=0.04)
+
+    # Right: |cosine target→global| heatmap (lower = better defense, red is bad)
+    cos_grid = np.array(
+        [[abs(matrix[a][g]["avg_cosine_target_to_global"]) for g in aggregators] for a in attacks]
+    )
+    im2 = ax2.imshow(cos_grid, cmap="Reds", vmin=0, vmax=1, aspect="auto")
+    ax2.set_xticks(range(len(aggregators)))
+    ax2.set_xticklabels(aggregators)
+    ax2.set_yticks(range(len(attacks)))
+    ax2.set_yticklabels(attacks)
+    ax2.set_title("|cos(target Δ → global Δ)|  (lower = better defense)")
+    for i in range(len(attacks)):
+        for j in range(len(aggregators)):
+            ax2.text(
+                j,
+                i,
+                f"{cos_grid[i, j]:.2f}",
+                ha="center",
+                va="center",
+                color="white" if cos_grid[i, j] > 0.5 else "black",
+                fontsize=10,
+            )
+    fig.colorbar(im2, ax=ax2, fraction=0.04)
+
+    fig.suptitle(
+        f"Byzantine attack × robust aggregator (K={s['args'].get('n_malicious', '?')} "
+        f"malicious / {s['args'].get('clients', '?')} clients, "
+        f"{s['args'].get('rounds', '?')} rounds)",
+        fontsize=11,
+    )
+    fig.tight_layout()
+    return fig
+
+
 # ----- Build UI --------------------------------------------------------------
 
 
@@ -390,6 +472,27 @@ def build_ui() -> gr.Blocks:
             demo.load(fn=plot_tradeoff, outputs=plot4)
             refresh4 = gr.Button("Refresh")
             refresh4.click(fn=plot_tradeoff, outputs=plot4)
+
+        with gr.Tab("5. Byzantine attacks × robust aggregation"):
+            gr.Markdown(
+                "**Different threat model:** instead of an attacker reading "
+                "gradients (tabs 2-4), here malicious *clients* poison their "
+                "updates to bias the global model — or to **deanonymize** an "
+                "honest target client. Robust aggregators (median, trimmed "
+                "mean, Krum) replace the FedAvg `mean` and neutralize the "
+                "attack at a small accuracy cost on honest data.\n"
+                "\n"
+                "Run `python -m scripts.byzantine` to populate the matrix below.\n"
+                "\n"
+                "- **Final test accuracy** — does the model still learn under attack?\n"
+                "- **|cos(target Δ → global Δ)|** — how much of the target's "
+                "  honest update direction leaks into the released global "
+                "  update. Large = privacy leak, small = defense holds."
+            )
+            plot5 = gr.Plot()
+            demo.load(fn=plot_byzantine_matrix, outputs=plot5)
+            refresh5 = gr.Button("Refresh")
+            refresh5.click(fn=plot_byzantine_matrix, outputs=plot5)
 
         gr.Markdown(
             "---\n"

@@ -1,5 +1,58 @@
 # Changelog
 
+## v0.3.0 — integrity attacks, robust aggregation, defense-aware adversary
+
+Adds the **active threat model** to the repo: malicious clients submit
+poisoned updates to bias the global model (utility attack) or to
+**deanonymize** an honest target client by collusion (privacy attack via
+poisoning, the v0.3 angle worth shipping). I first prototyped the
+gradient-suppression idea in TFF on a clinical-data FL coursework; v0.3 is
+the PyTorch port plus the robust aggregations that defeat it, and a
+defense-aware adversary that motivates non-trivial defenses.
+
+### Added
+
+- `src/attacks/byzantine.py` — five attacks:
+  - `SignFlipAttack` (Δ → -Δ) — utility baseline.
+  - `ConstantAttack` — fixed huge value, defeated trivially by norm bound.
+  - `GradientSuppressionAttack` — N-1 colluding clients submit pairwise-
+    cancelling extreme updates; the residual is dominated by one *target*
+    honest client. Used to deanonymize a specific client, not just degrade
+    accuracy.
+  - `StealthSuppression` — defense-aware variant that respects an estimated
+    honest-norm envelope, designed to slip past coordinate-wise median /
+    trimmed-mean / Krum.
+  - `BackdoorAttack` — stub reserved for v0.4 (Bagdasaryan+ 2020).
+- `src/defenses/robust.py` — four aggregators + a norm filter:
+  - `aggregate_mean` — vanilla FedAvg, reference behavior.
+  - `aggregate_median` — coordinate-wise median (Yin+ 2018).
+  - `aggregate_trimmed_mean` — drop top/bottom k% per coordinate.
+  - `aggregate_krum` — pick the client closest to its peers (Blanchard+ 2017).
+  - `filter_by_update_norm` — pre-filter for updates exceeding an L2 bound.
+- `FLServer.aggregate(aggregator='mean'|'median'|'trimmed_mean'|'krum')`
+  with full DP composition (DP and robust aggregator are independent).
+- `FLServer.train_round(byzantine_attacks={i: attack})` for malicious
+  client injection.
+- `scripts/byzantine.py` — full attack × aggregator matrix CLI sweeping
+  4 attacks × 4 aggregators × N rounds, with `--quick` smoke mode and
+  `--attacks`/`--aggregators` subset filters.
+- `tests/test_byzantine.py` — 14 tests, including E2E "median recovers
+  ≥30% of mean's error under 2 sign-flippers" gate.
+- Gradio Tab 5 — accuracy + cosine-similarity heatmaps over the matrix.
+
+### Changed
+
+- `FLServer.aggregate()` API: previously fixed to mean; now takes an
+  `aggregator` argument. Default behavior (`aggregator="mean"`) matches v0.2.
+- README and ROADMAP updated with the v0.3 results matrix.
+
+### Known limitations
+
+- The cosine-similarity metric `cos(target_diff, global_diff)` saturates
+  near 1 in early FL rounds when all clients agree on direction. A more
+  sensitive deanonymization metric (residual after subtracting non-target
+  honest contribution) is queued for v0.3.1.
+
 ## v0.2.0 — privacy story is now real
 
 ### Added
