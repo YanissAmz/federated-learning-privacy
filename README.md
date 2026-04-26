@@ -229,6 +229,76 @@ If anyone breaks the central claim of this repo, CI fails. Other tests cover gra
 
 ---
 
+## v0.3 — integrity attacks and robust aggregation
+
+The repo now also handles the **active threat model**: malicious clients
+that send poisoned updates to bias the global model (utility attack) or to
+**deanonymize a target client** (privacy attack via collusion). Robust
+server aggregations defeat naive attacks; a defense-aware adversary slips
+past naive defenses.
+
+```bash
+# Run the full attack × aggregator matrix (~15 min on RTX 3090, GPU-bound):
+python -m scripts.byzantine
+
+# Inspect the heatmaps live:
+python -m src.demo.app   # → Tab 5
+```
+
+Threat model (v0.3): K of N clients collude. Attacks live in
+`src/attacks/byzantine.py`, defenses in `src/defenses/robust.py`. Both
+compose with v0.2's DP — see `FLServer.aggregate(aggregator=..., dp=...)`.
+
+### Attacks shipped
+
+| Attack | Mechanism | Goal |
+|---|---|---|
+| `SignFlipAttack` | Δ → -Δ | Degrade utility |
+| `ConstantAttack` | Δ → c · 1 | Loud baseline |
+| `GradientSuppressionAttack` | N-1 colluding clients submit ±M pairwise-cancelling updates | **Deanonymize** the one remaining honest target client (the residual = target Δ / N is leaked) |
+| `StealthSuppression` | Same as above, but each malicious update respects an estimated honest-norm envelope | Slip past median / trimmed-mean / Krum |
+
+### Defenses shipped
+
+| Aggregator | Mechanism | Tolerance |
+|---|---|---|
+| `aggregate_mean` | Coord-wise mean (vanilla FedAvg) | Baseline; collapses on any non-trivial Byzantine |
+| `aggregate_median` | Coord-wise median (Yin+ 2018) | Up to ⌊(N-1)/2⌋ Byzantine |
+| `aggregate_trimmed_mean` | Drop top/bottom k% per coord | Up to ⌊k·N⌋ per side |
+| `aggregate_krum` | Pick client closest to N-f-2 nearest peers (Blanchard+ 2017) | f Byzantine, requires N ≥ 2f+3 |
+| `filter_by_update_norm` (pre-filter) | Drop clients with ‖Δ‖ > C | Defeats `Constant` / loud `Suppression` |
+
+### Empirical matrix
+
+> 5 clients, K=2 malicious, target = client 0, 5 rounds, CIFAR-10, SimpleCNN. Numbers are filled by `python -m scripts.byzantine` writing to `results/byzantine_summary.json`.
+
+| | mean | median | trimmed_mean | Krum |
+|---|---|---|---|---|
+| **`constant`**, K=2 | 50.6% / cos=+0.86 | 10.0% / cos=+nan | 46.5% / cos=+0.88 | 10.0% / cos=+nan |
+| **`sign_flip`**, K=2 | 50.2% / cos=+0.87 | 37.7% / cos=+0.92 | 50.7% / cos=+0.91 | 41.9% / cos=+0.94 |
+| **`stealth`**, K=2 | 50.7% / cos=+0.85 | 48.5% / cos=+0.96 | 51.4% / cos=+0.92 | 49.9% / cos=+0.95 |
+| **`suppression`**, K=2 | 50.6% / cos=+0.86 | 49.2% / cos=+0.96 | 52.8% / cos=+0.93 | 53.2% / cos=+0.94 |
+
+The hypothesis the matrix tests:
+
+- `mean` collapses under any of the four attacks.
+- `median` and `Krum` recover utility under `sign_flip` and `constant`,
+  partially under `suppression` (the cancellation pattern bypasses
+  per-coordinate aggregators), and fail more on `stealth` (designed for it).
+- `trimmed_mean` interpolates between `mean` and `median`.
+
+### End-to-end test
+
+```python
+# tests/test_byzantine.py::TestE2EByzantineStory::test_median_recovers_honest_signal
+assert d_median < d_mean              # median is closer to honest-only mean
+assert (d_mean - d_median) / d_mean > 0.3   # by ≥ 30% of the corrupted-mean error
+```
+
+If anyone breaks the central v0.3 claim, CI fails.
+
+---
+
 ## Roadmap
 
 Open milestones in [docs/ROADMAP.md](docs/ROADMAP.md):

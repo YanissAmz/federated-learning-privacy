@@ -1,0 +1,52 @@
+{
+  "attack": "stealth",
+  "aggregator": "median",
+  "n_clients": 5,
+  "n_malicious": 2,
+  "target_idx": 0,
+  "rounds": 5,
+  "model": "cnn",
+  "init_accuracy": 0.0873,
+  "final_accuracy": 0.5143,
+  "history": [
+    {
+      "round": 1,
+      "accuracy": 0.3235,
+      "loss": 1.9469594078063965,
+      "elapsed_s": 12.6
+    },
+    {
+      "round": 2,
+      "accuracy": 0.406,
+      "loss": 1.6773254110336304,
+      "elapsed_s": 25.3
+    },
+    {
+      "round": 3,
+      "accuracy": 0.4603,
+      "loss": 1.5096657218933105,
+      "elapsed_s": 37.9
+    },
+    {
+      "round": 4,
+      "accuracy": 0.4828,
+      "loss": 1.4335984661102295,
+      "elapsed_s": 50.3
+    },
+    {
+      "round": 5,
+      "accuracy": 0.5143,
+      "loss": 1.3575248203277588,
+      "elapsed_s": 62.8
+    }
+  ],
+  "cosine_target_to_global_per_round": [
+    0.9762846231460571,
+    0.9644615650177002,
+    0.9425065517425537,
+    0.8903292417526245,
+    0.8448125720024109
+  ],
+  "avg_cosine_target_to_global": 0.9236789107322693,
+  "wall_clock_s": 62.8
+}

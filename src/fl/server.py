@@ -1,7 +1,10 @@
 """Federated learning server: FedAvg aggregation, optional Central DP, real eval."""
 
+from __future__ import annotations
+
 import copy
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import torch
 import torch.nn as nn
@@ -9,6 +12,9 @@ from torch.utils.data import DataLoader, Dataset
 
 from src.defenses.dp import state_dict_diff
 from src.fl.client import FLClient
+
+if TYPE_CHECKING:
+    from src.attacks.byzantine import ByzantineAttack
 
 
 @dataclass
@@ -47,52 +53,58 @@ class FLServer:
         self,
         client_states: list[dict[str, torch.Tensor]],
         dp: DPConfig | None = None,
+        aggregator: str = "mean",
+        aggregator_kwargs: dict | None = None,
     ) -> None:
-        """FedAvg: average client diffs and apply to the global model.
+        """Aggregate client states into a new global model.
 
-        With `dp != None`, each client's diff is **clipped** to L2 ≤ max_norm,
-        averaged, and then a **single** Gaussian noise term of std
-        `max_norm * noise_multiplier / N` is added to the average. This is the
-        canonical Central-DP-FedAvg pattern (McMahan+ 2018): noise once on the
-        averaged update, not N times on each client's diff. With per-client
-        independent noise the variance would scale as σ²/N after averaging,
-        which over-noises by √N relative to the formal guarantee — fixed here.
+        Pipeline (DP and robust aggregator are independent and compose):
+            1. Compute per-client diffs `Δ_i = client_state_i - global_state`.
+            2. Optionally clip each `Δ_i` to L2 ≤ `dp.max_norm` (DP only).
+            3. Combine the (possibly clipped) `Δ_i` via `aggregator`:
+                - "mean"          — coordinate-wise mean (vanilla FedAvg)
+                - "median"        — coordinate-wise median (Yin+ 2018)
+                - "trimmed_mean"  — trimmed mean (Yin+ 2018)
+                - "krum"          — single closest-to-peers client (Blanchard+ 2017)
+            4. Optionally add Gaussian noise (DP only) to the combined diff,
+               with σ = `dp.max_norm * dp.noise_multiplier / N`.
+            5. Apply the combined+noised diff to the global model.
+
+        Notes:
+            - Krum selects exactly one client; with Krum the "averaged" diff
+              is that client's clipped diff. DP still applies on it.
+            - NaN/Inf guard at the end keeps a parameter pinned to its
+              previous value if the noise blows it up — happens at very tight
+              ε, see the v0.2 README.
         """
-        from src.defenses.dp import (
-            add_noise_to_diff,
-            clip_state_diff,
-        )
+        from src.defenses.dp import add_noise_to_diff, clip_state_diff
+        from src.defenses.robust import build_aggregator
 
         global_state = self.global_model.state_dict()
         n_clients = len(client_states)
+        aggregator_kwargs = aggregator_kwargs or {}
 
-        # 1. Per-client diff + clip (no noise yet).
-        clipped_diffs: list[dict[str, torch.Tensor]] = []
+        # 1+2. Per-client diffs (with DP clip if enabled).
+        diffs: list[dict[str, torch.Tensor]] = []
         for cs in client_states:
             diff = state_dict_diff(global_state, cs)
             if dp is not None:
                 diff = clip_state_diff(diff, max_norm=dp.max_norm)
-            clipped_diffs.append(diff)
+            diffs.append(diff)
 
-        # 2. Average the clipped diffs.
-        avg_diff: dict[str, torch.Tensor] = {}
-        for key in global_state:
-            avg_diff[key] = torch.stack([d[key] for d in clipped_diffs]).mean(dim=0)
+        # 3. Robust combination of diffs (mean is the FedAvg baseline).
+        agg_fn = build_aggregator(aggregator, **aggregator_kwargs)
+        combined_diff = agg_fn(diffs)
 
-        # 3. Add Gaussian noise ONCE to the average. Variance scales 1/N because
-        #    sum sensitivity is max_norm and the average divides by N.
+        # 4. DP noise on the combined diff (independent of aggregator).
         if dp is not None:
             sigma_avg = dp.max_norm * dp.noise_multiplier / n_clients
-            avg_diff = add_noise_to_diff(avg_diff, sigma=sigma_avg)
+            combined_diff = add_noise_to_diff(combined_diff, sigma=sigma_avg)
 
-        # 4. Apply the (possibly noisy) average to the global model.
-        #    Guard against NaN/Inf: at very small ε the noise can cause
-        #    activations to explode, producing NaN parameters. We zero such
-        #    keys so subsequent rounds don't propagate NaN. The accuracy will
-        #    stay flat — this collapse is the message of the experiment.
+        # 5. Apply, with NaN/Inf guard.
         new_state: dict[str, torch.Tensor] = {}
         for key, gv in global_state.items():
-            updated = gv.float() + avg_diff[key]
+            updated = gv.float() + combined_diff[key]
             mask_bad = ~torch.isfinite(updated)
             if mask_bad.any():
                 updated = torch.where(mask_bad, gv.float(), updated)
@@ -110,19 +122,38 @@ class FLServer:
         lr: float = 0.01,
         dp: DPConfig | None = None,
         round_idx: int = 0,
+        byzantine_attacks: dict[int, ByzantineAttack] | None = None,
+        aggregator: str = "mean",
+        aggregator_kwargs: dict | None = None,
     ) -> RoundMetrics:
         """One FL round: distribute, train locally, aggregate, (optionally) eval.
 
-        Returns a `RoundMetrics` snapshot. If `eval_dataset` is None, accuracy
-        and loss are reported as 0.0 / inf (used in unit tests where eval is
-        intentionally skipped).
+        Args:
+            byzantine_attacks: optional `{client_index: ByzantineAttack}` map.
+                When set, those clients return a poisoned state-dict instead
+                of their honestly-trained one.
+            aggregator: "mean" | "median" | "trimmed_mean" | "krum"
+                — passed through to `aggregate()`.
         """
+        global_state_at_round_start = {
+            k: v.detach().clone() for k, v in self.global_model.state_dict().items()
+        }
         client_states = []
-        for client in clients:
+        for i, client in enumerate(clients):
             local_model = copy.deepcopy(self.global_model)
-            state = client.train(local_model, epochs=epochs, batch_size=batch_size, lr=lr)
+            honest_state = client.train(local_model, epochs=epochs, batch_size=batch_size, lr=lr)
+            if byzantine_attacks and i in byzantine_attacks:
+                attack = byzantine_attacks[i]
+                state = attack.craft_state(global_state_at_round_start, honest_state)
+            else:
+                state = honest_state
             client_states.append(state)
-        self.aggregate(client_states, dp=dp)
+        self.aggregate(
+            client_states,
+            dp=dp,
+            aggregator=aggregator,
+            aggregator_kwargs=aggregator_kwargs,
+        )
 
         if eval_dataset is not None:
             acc, loss = self.evaluate(eval_dataset, batch_size=batch_size)

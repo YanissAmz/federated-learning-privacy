@@ -1,0 +1,52 @@
+{
+  "attack": "constant",
+  "aggregator": "krum",
+  "n_clients": 5,
+  "n_malicious": 2,
+  "target_idx": 0,
+  "rounds": 5,
+  "model": "cnn",
+  "init_accuracy": 0.0873,
+  "final_accuracy": 0.5056,
+  "history": [
+    {
+      "round": 1,
+      "accuracy": 0.2246,
+      "loss": 2.0448114669799806,
+      "elapsed_s": 12.5
+    },
+    {
+      "round": 2,
+      "accuracy": 0.3774,
+      "loss": 1.7713497966766358,
+      "elapsed_s": 25.0
+    },
+    {
+      "round": 3,
+      "accuracy": 0.4301,
+      "loss": 1.5853675457000733,
+      "elapsed_s": 37.6
+    },
+    {
+      "round": 4,
+      "accuracy": 0.4665,
+      "loss": 1.4811105407714844,
+      "elapsed_s": 50.3
+    },
+    {
+      "round": 5,
+      "accuracy": 0.5056,
+      "loss": 1.380887511062622,
+      "elapsed_s": 62.8
+    }
+  ],
+  "cosine_target_to_global_per_round": [
+    0.9575636386871338,
+    0.9419755935668945,
+    0.8875033259391785,
+    0.7918365597724915,
+    0.6970553994178772
+  ],
+  "avg_cosine_target_to_global": 0.8551869034767151,
+  "wall_clock_s": 62.83
+}
